@@ -1,0 +1,113 @@
+# golangci-lint v2, pinned in tools/go.mod (run: make lint).
+#
+# A reduced form of a strict bundle. Left out on purpose:
+#   govet fieldalignment — reorders fields of structs whose size doesn't
+#     matter, at the cost of readability.
+#   govet shadow (strict) — flags the idiomatic `if err := …` and `v, ok := …`.
+version: "2"
+
+run:
+  build-tags: [integration]
+
+linters:
+  default: none
+  enable:
+    # correctness
+    - govet
+    - staticcheck
+    - errcheck
+    - errorlint
+    - nilerr
+    - nilnil
+    - contextcheck
+    - fatcontext
+    - copyloopvar
+    - intrange
+    - usetesting
+    - unused
+    - ineffassign
+    - unconvert
+    - unparam
+    - makezero
+    # sealed interfaces (netapply.Op) and enum switches
+    - gochecksumtype
+    - exhaustive
+    # complexity
+    - gocognit
+    - gocyclo
+    - funlen
+    - nestif
+    # style, docs, logging, small performance
+    - revive
+    - misspell
+    - dupword
+    - whitespace
+    - sloglint
+    - perfsprint
+    - prealloc
+    # security
+    - gosec
+  settings:
+    errcheck:
+      check-type-assertions: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    exhaustive:
+      default-signifies-exhaustive: true
+    gochecksumtype:
+      default-signifies-exhaustive: true
+    gocognit:
+      min-complexity: 25
+    gocyclo:
+      min-complexity: 15
+    funlen:
+      lines: 90
+      statements: 60
+      ignore-comments: true
+    nestif:
+      min-complexity: 4
+    sloglint:
+      no-global: all
+      attr-only: false
+      kv-only: true
+    gosec:
+      excludes:
+        - G204 # lldpcli is executed by design; its path comes from config/flags.
+        - G304 # sysfs and config files are read from configured paths by design.
+        - G301 # /run/slingshot-netcfg is world-readable status (spec §6.9).
+        - G306 # sysctl files under /proc/sys already exist; the mode is ignored.
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: var-naming
+        - name: error-return
+        - name: error-naming
+        - name: errorf
+        - name: if-return
+        - name: indent-error-flow
+        - name: superfluous-else
+        - name: redefines-builtin-id
+        - name: time-naming
+        - name: unhandled-error
+          arguments: ["fmt.Print.*", "fmt.Fprint.*", "strings.Builder.WriteString", "bytes.Buffer.Write"]
+  exclusions:
+    rules:
+      # Test cleanup and setup may ignore errors; tests fail on what matters.
+      - path: (_test\.go|^integration/)
+        linters: [errcheck, gosec, revive, funlen, gocognit, gocyclo]
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/opencube-horizon/slingshot-netcfg
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

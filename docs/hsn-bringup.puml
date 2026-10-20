@@ -1,0 +1,80 @@
+@startuml hsn-bringup
+' Bring-up of one Cassini NIC (spec §6.10). Render with `make diagrams`.
+!theme plain
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam ArrowColor #222222
+skinparam ArrowFontSize 11
+skinparam StateBorderColor #222222
+skinparam StateBackgroundColor #FFFFFF
+' State names are bolded inline with <b>: StateFontStyle bold would also
+' bold the descriptions (internal transitions).
+skinparam NoteBackgroundColor #FFF8DC
+skinparam NoteBorderColor #A08C50
+skinparam state {
+  BackgroundColor<<happy>> #DCEBFF
+  BorderColor<<happy>> #1F4E8C
+  BackgroundColor<<side>> #F2F2F2
+  BackgroundColor<<platform>> #EFEFEF
+}
+hide stereotype
+hide empty description
+
+[*] --> NoDriver
+state "<b>no driver</b>" as NoDriver <<platform>>
+NoDriver --> NIC : cxi modules loaded
+
+state "<b>Cassini NIC (one PCI function)</b>" as NIC {
+  state "<b>netdev</b>" as Netdev {
+    state "<b>ethN (transient name)</b>" as Unnamed <<platform>>
+    [*] --> Unnamed : cxi_eth registers netdev
+    Unnamed --> Selected : udev renames to hsnN
+
+    state "<b>hsnN, selected by slingshot-netcfg</b>" as Selected {
+      state "<b>waiting-carrier</b>" as WaitingCarrier <<happy>>
+      state "<b>waiting-neighbor</b>" as WaitingNeighbor <<happy>>
+      state "<b>provisioned</b>" as Provisioned <<happy>>
+      state "<b>stale</b>" as Stale <<side>>
+      state CarrierUp <<choice>>
+
+      [*] -down-> WaitingCarrier : sysctls, link up
+      WaitingCarrier -down-> CarrierUp : carrier
+      ' WaitingNeighbor and Stale share a rank so no labelled edge spans
+      ' more than one rank; longer edges get S-bends through label nodes.
+      CarrierUp -down-> WaitingNeighbor : [no address]
+      CarrierUp -down-> Stale : [address present]
+      WaitingNeighbor -down-> Provisioned : valid Cray TLV, pass ok\n(first time: hsnN.ready)
+      Provisioned -up-> Stale : neighbor gone
+      Stale -down-> Provisioned : valid\nCray TLV
+      Stale -left-> WaitingNeighbor : address expired,\nrouting removed
+      Provisioned : TLV changed / lifetime refresh\n/ re-apply
+      Stale : no neighbor; address kept\nuntil it expires
+
+      note bottom of Stale
+        carrier lost from any state: back to
+        waiting-carrier, configuration kept
+      end note
+      --
+      state "<b>healthy</b>" as Healthy <<happy>>
+      state "<b>degraded</b>" as Degraded <<side>>
+      [*] --> Healthy
+      Healthy -down-> Degraded : invalid TLV / apply failure /\nanother agent modifying hsnN
+      Degraded -up-> Healthy : pass ok
+      note bottom of Degraded
+        configuration kept;
+        retry with backoff 1–30 s
+      end note
+    }
+    Selected --> [*] : netdev removed\n(nothing deconfigured)
+  }
+  ||
+  state "<b>CXI device</b>" as CXI {
+    state "<b>/dev/cxiN present</b>" as CXIDev <<platform>>
+    state "<b>cxi_rh running</b>" as RH <<happy>>
+    [*] --> CXIDev : cxi_user creates /dev/cxiN
+    CXIDev -down-> RH : cxi_rh\nservice starts
+    RH -up-> CXIDev : exit,\nrestarted
+  }
+}
+@enduml

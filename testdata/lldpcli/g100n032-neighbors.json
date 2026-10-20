@@ -1,0 +1,61 @@
+{
+  "lldp": [
+    {
+      "interface": [
+        {
+          "name": "ens2f0np0",
+          "via": "LLDP",
+          "rid": "2",
+          "age": "0 day, 00:00:12",
+          "chassis": [
+            {
+              "id": [{"type": "mac", "value": "44:5b:ed:9d:22:80"}],
+              "name": [{"value": "8360"}],
+              "descr": [{"value": "Aruba JL720A  LL.10.07.0010"}],
+              "mgmt-ip": [{"value": "198.51.100.169"}],
+              "capability": [{"type": "Bridge", "enabled": true}, {"type": "Router", "enabled": true}]
+            }
+          ],
+          "port": [
+            {
+              "id": [{"type": "ifname", "value": "1/1/47"}],
+              "descr": [{"value": "1/1/47"}],
+              "ttl": [{"value": "120"}]
+            }
+          ]
+        },
+        {
+          "name": "hsn0",
+          "via": "LLDP",
+          "rid": "1",
+          "age": "0 day, 00:00:21",
+          "chassis": [
+            {
+              "id": [{"type": "mac", "value": "02:fe:00:00:00:37"}],
+              "name": [{"value": "x3000c0r0b0"}]
+            }
+          ],
+          "port": [
+            {
+              "id": [{"type": "mac", "value": "02:fe:00:00:00:37"}],
+              "descr": [{"value": "Interface  60 as ros0p55"}],
+              "ttl": [{"value": "120"}]
+            }
+          ],
+          "unknown-tlvs": [
+            {
+              "unknown-tlv": [
+                {
+                  "oui": "00,0E,AB",
+                  "subtype": "1",
+                  "len": "81",
+                  "value": "7B,22,69,70,5F,61,64,64,72,22,3A,22,31,37,32,2E,32,34,2E,30,2E,37,2F,31,36,22,2C,22,74,74,6C,22,3A,22,66,6F,72,65,76,65,72,22,2C,22,6D,74,75,22,3A,39,30,30,30,2C,22,71,6F,73,50,72,6F,66,69,6C,65,22,3A,22,6C,6C,5F,62,65,5F,62,64,5F,65,74,22,7D"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

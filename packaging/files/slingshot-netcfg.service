@@ -1,0 +1,15 @@
+[Unit]
+Description=Slingshot HSN provisioning from LLDP
+Documentation=https://github.com/opencube-horizon/slingshot-netcfg
+Wants=lldpd.service
+After=lldpd.service systemd-udevd.service
+
+[Service]
+ExecStart=/usr/bin/slingshot-netcfg run
+Restart=always
+RestartSec=2
+RuntimeDirectory=slingshot-netcfg
+RuntimeDirectoryPreserve=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,63 @@
+{
+  "lldp": [
+    {
+      "interface": [
+        {
+          "name": "hsn0",
+          "status": [{"value": "RX and TX"}],
+          "chassis": [
+            {
+              "id": [{"type": "mac", "value": "02:00:00:00:00:10"}],
+              "name": [{"value": "cn01.example.org"}],
+              "descr": [{"value": "openSUSE Leap 16.0 Linux 6.12.0-160000.6-default #1 SMP PREEMPT_DYNAMIC Fri Oct 17 10:54:40 UTC 2025 (724dacd) aarch64"}],
+              "mgmt-ip": [{"value": "192.0.2.3"}, {"value": "fe80::ff:fe00:10"}],
+              "mgmt-iface": [{"value": "2"}, {"value": "2"}],
+              "capability": [{"type": "Bridge", "enabled": true}, {"type": "Router", "enabled": true}, {"type": "Wlan", "enabled": false}, {"type": "Station", "enabled": false}]
+            }
+          ],
+          "port": [
+            {
+              "id": [{"type": "mac", "value": "02:00:00:00:00:10"}],
+              "descr": [{"value": "hsn0"}]
+            }
+          ],
+          "ttl": [{"ttl": "120"}]
+        },
+        {
+          "name": "enP1p1s0f0np0",
+          "status": [{"value": "RX and TX"}],
+          "chassis": [
+            {
+              "id": [{"type": "mac", "value": "02:00:00:00:00:10"}],
+              "name": [{"value": "cn01.example.org"}]
+            }
+          ],
+          "port": [
+            {
+              "id": [{"type": "mac", "value": "b8:3f:d2:b5:00:60"}],
+              "descr": [{"value": "enP1p1s0f0np0"}]
+            }
+          ],
+          "ttl": [{"ttl": "120"}]
+        },
+        {
+          "name": "veth8cfdad97",
+          "status": [{"value": "RX and TX"}],
+          "chassis": [
+            {
+              "id": [{"type": "mac", "value": "02:00:00:00:00:10"}],
+              "name": [{"value": "cn01.example.org"}]
+            }
+          ],
+          "port": [
+            {
+              "id": [{"type": "mac", "value": "02:2b:ce:ec:9d:fa"}],
+              "descr": [{"value": "veth8cfdad97"}]
+            }
+          ],
+          "ttl": [{"ttl": "120"}]
+        }
+      ]
+    }
+  ]
+}
