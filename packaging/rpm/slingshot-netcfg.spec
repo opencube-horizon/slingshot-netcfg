@@ -15,6 +15,7 @@ ExclusiveArch:  x86_64 aarch64
 BuildRequires:  golang >= 1.27
 BuildRequires:  systemd-rpm-macros
 Requires:       lldpd
+Requires(pre):  systemd
 Conflicts:      slingshot-network-config
 %{?systemd_requires}
 
@@ -39,15 +40,28 @@ go test ./internal/...
 %install
 install -D -m 0755 %{name} %{buildroot}%{_bindir}/%{name}
 install -D -m 0644 packaging/files/%{name}.service %{buildroot}%{_unitdir}/%{name}.service
+install -D -m 0644 packaging/files/%{name}.sysusers %{buildroot}%{_sysusersdir}/%{name}.conf
 install -D -m 0644 packaging/files/90-%{name}-networkmanager.conf %{buildroot}%{_prefix}/lib/NetworkManager/conf.d/90-%{name}.conf
 install -D -m 0644 packaging/files/90-%{name}-sysctl.conf %{buildroot}%{_sysctldir}/90-%{name}.conf
 install -D -m 0644 packaging/files/99-%{name}-limits.conf %{buildroot}%{_sysconfdir}/security/limits.d/99-%{name}.conf
 
+# The service user, as in packaging/files/%{name}.sysusers. The payload
+# isn't installed yet in %pre, so the line is passed on stdin.
+%define create_user \
+echo 'u %{name} - "Slingshot HSN provisioning from LLDP" -' | systemd-sysusers --replace=%{_sysusersdir}/%{name}.conf - || :
+
+# On upgrade from a version that ran as root: systemd can't take over the
+# preserved runtime directory itself, because SELinux denies init_t the chown.
+%define chown_rundir \
+if [ -d /run/%{name} ]; then chown -R %{name}:%{name} /run/%{name} || :; fi
+
 %if 0%{?suse_version}
 %pre
+%create_user
 %service_add_pre %{name}.service
 
 %post
+%chown_rundir
 %service_add_post %{name}.service
 %sysctl_apply 90-%{name}.conf
 
@@ -57,7 +71,11 @@ install -D -m 0644 packaging/files/99-%{name}-limits.conf %{buildroot}%{_sysconf
 %postun
 %service_del_postun %{name}.service
 %else
+%pre
+%create_user
+
 %post
+%chown_rundir
 %systemd_post %{name}.service
 %sysctl_apply 90-%{name}.conf
 
@@ -72,6 +90,7 @@ install -D -m 0644 packaging/files/99-%{name}-limits.conf %{buildroot}%{_sysconf
 %license LICENSE
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service
+%{_sysusersdir}/%{name}.conf
 %dir %{_prefix}/lib/NetworkManager
 %dir %{_prefix}/lib/NetworkManager/conf.d
 %{_prefix}/lib/NetworkManager/conf.d/90-%{name}.conf
