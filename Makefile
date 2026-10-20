@@ -7,7 +7,7 @@
 #   make lint                # golangci-lint, config in .golangci.yml
 #   make fmt                 # apply gofumpt + goimports
 #   make test                # unit tests with the race detector (Linux only)
-#   make nilaway             # nil-safety analysis; advisory, may report false positives
+#   make nilaway             # nil-safety analysis (nilaway)
 #
 # Diagrams (docs/*.puml → SVG, PNG; PlantUML lays them out with Graphviz):
 #

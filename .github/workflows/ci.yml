@@ -30,11 +30,8 @@ jobs:
           go-version-file: go.mod
       - run: make test
 
-  # Advisory: nilaway has no tagged releases yet and reports false positives
-  # on map lookups guarded by invariants. Findings are shown, not enforced.
   nilaway:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
