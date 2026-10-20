@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"runtime"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 	"github.com/opencube-horizon/slingshot-netcfg/internal/lldpd"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/netapply"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/reconcile"
+	"github.com/opencube-horizon/slingshot-netcfg/internal/sandbox"
+	"github.com/opencube-horizon/slingshot-netcfg/internal/sdnotify"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/status"
 )
 
@@ -51,6 +54,14 @@ func Run(ctx context.Context, o Options) error {
 	}
 	defer handle.Close()
 	o = withDefaults(o)
+	notifier, err := sdnotify.FromEnv()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = notifier.Close() }() // a failed close of a datagram socket needs no handling
+	if err := os.MkdirAll(o.RunDir, 0o755); err != nil {
+		return fmt.Errorf("create %s: %w", o.RunDir, err)
+	}
 
 	once := o.Once || o.DryRun
 	if once {
@@ -64,12 +75,21 @@ func Run(ctx context.Context, o Options) error {
 		Selector: discover.Selector{
 			SysRoot: o.SysRoot, Pattern: cfg.Interfaces.NamePattern, PCIIDs: cfg.Interfaces.PCIIDs, Only: o.Only,
 		},
-		Status: status.Writer{Dir: o.RunDir},
-		Log:    o.Log,
-		DryRun: o.DryRun,
-		Once:   once,
+		Status:   status.Writer{Dir: o.RunDir},
+		Log:      o.Log,
+		DryRun:   o.DryRun,
+		Once:     once,
+		Notify:   notifier.Notify,
+		Watchdog: notifier.WatchdogInterval(),
 	}
 	o.Log.Info("starting", "gomaxprocs", runtime.GOMAXPROCS(0), "lldpcli", poller.Path(), "socket", cfg.LLDPD.Socket, "dryRun", o.DryRun, "once", once)
+	if cfg.Security.Landlock {
+		abi, err := sandbox.Restrict(sandbox.Paths{SysRoot: o.SysRoot, ProcNet: netapply.ProcNet, RunDir: o.RunDir, LLDPCLI: poller.Path()})
+		if err != nil {
+			return err
+		}
+		o.Log.Info("landlock", "abi", abi)
+	}
 
 	results := make(chan lldpd.Result, 1)
 	triggers := make(chan struct{}, 1)

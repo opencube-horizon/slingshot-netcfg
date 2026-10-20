@@ -36,6 +36,8 @@ func startService(t *testing.T, runDir, sysRoot string) *svc {
 	cfg.ResyncInterval = 5 * time.Second
 	cfg.LLDPD.PollInterval = time.Second
 	cfg.LLDPD.Socket = hostSocket
+	// The service runs inside the test process, which Landlock would confine for good.
+	cfg.Security.Landlock = false
 	out := io.Discard
 	if testing.Verbose() {
 		out = os.Stderr
