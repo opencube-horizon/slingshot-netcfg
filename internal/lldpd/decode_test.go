@@ -51,6 +51,9 @@ func TestDecodeNeighbors_cn01_keepsForeignOUIs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DecodeNeighbors: %v", err)
 	}
+	if len(got) != 2 {
+		t.Fatalf("got %d neighbors, want 2", len(got))
+	}
 	mgmt := got[1]
 	if mgmt.Interface != "enP1p1s0f0np0" || len(mgmt.Custom) != 1 ||
 		mgmt.Custom[0].OUI != [3]byte{0x00, 0x16, 0xb9} || string(mgmt.Custom[0].Info) != "\x00\x01" {
