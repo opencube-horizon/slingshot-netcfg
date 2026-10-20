@@ -7,10 +7,14 @@ toolchain go1.27.1
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/google/go-cmp v0.7.0
+	github.com/landlock-lsm/go-landlock v0.10.1
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/goleak v1.3.0
 	golang.org/x/sync v0.23.0
 	golang.org/x/sys v0.48.0
 )
 
-require github.com/vishvananda/netns v0.0.5 // indirect
+require (
+	github.com/vishvananda/netns v0.0.5 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
+)
