@@ -40,11 +40,17 @@ func setLink(i discover.Iface, t *desired.Target) (netapply.SetLink, bool) {
 // netlink event caused by the refresh itself doesn't trigger another one.
 func replaceAddr(i discover.Iface, t *desired.Target, present []netapply.Addr, resync float64) (netapply.ReplaceAddr, bool) {
 	op := netapply.ReplaceAddr{Name: i.Link.Name, Index: i.Link.Index, Prefix: t.Payload.Prefix, Lifetime: t.Payload.Lifetime}
-	idx := slices.IndexFunc(present, func(a netapply.Addr) bool { return a.Prefix == t.Payload.Prefix })
-	if idx < 0 {
+	var have uint32
+	found := false
+	for _, a := range present {
+		if a.Prefix == t.Payload.Prefix {
+			have, found = a.ValidLft, true
+			break
+		}
+	}
+	if !found {
 		return op, true
 	}
-	have := present[idx].ValidLft
 	if t.Payload.Lifetime == craytlv.Forever {
 		return op, have != uint32(craytlv.Forever)
 	}
