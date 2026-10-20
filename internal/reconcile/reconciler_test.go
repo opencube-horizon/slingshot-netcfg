@@ -40,13 +40,18 @@ type harness struct {
 	results chan lldpd.Result
 	trig    chan struct{}
 	fast    chan bool
+	notes   chan string
 	cancel  context.CancelFunc
 	done    chan error
 }
 
-func start(t *testing.T, k *fakeKernel, once bool) *harness {
-	h := &harness{k: k, runDir: t.TempDir(), results: make(chan lldpd.Result, 1), trig: make(chan struct{}, 1), fast: make(chan bool, 1), done: make(chan error, 1)}
+func start(t *testing.T, k *fakeKernel, once bool, configure ...func(*Reconciler)) *harness {
+	h := &harness{k: k, runDir: t.TempDir(), results: make(chan lldpd.Result, 1), trig: make(chan struct{}, 1), fast: make(chan bool, 1), notes: make(chan string, 256), done: make(chan error, 1)}
 	h.rec = &Reconciler{Cfg: cfg, Kernel: k, Selector: cassiniSelector(t), Status: status.Writer{Dir: h.runDir}, Log: slog.New(slog.DiscardHandler), Once: once}
+	h.rec.Notify = func(state string) error { h.notes <- state; return nil }
+	for _, c := range configure {
+		c(h.rec)
+	}
 	ctx, cancel := context.WithCancel(t.Context())
 	h.cancel = cancel
 	go func() { h.done <- h.rec.Run(ctx, h.results, h.trig, h.fast) }()
