@@ -122,7 +122,7 @@ func (k *Kernel) observeSysctls(devs []string, disableIPv6 bool) (map[string]str
 	out := map[string]string{}
 	for _, dev := range devs {
 		for _, sc := range InterfaceSysctls(dev, disableIPv6) {
-			b, err := os.ReadFile(filepath.Join(procNet, sc.Path))
+			b, err := os.ReadFile(filepath.Join(ProcNet, sc.Path))
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("read sysctl %s: %w", sc.Path, err)
 			}

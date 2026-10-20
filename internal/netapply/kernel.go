@@ -14,8 +14,8 @@ import (
 	"github.com/opencube-horizon/slingshot-netcfg/internal/desired"
 )
 
-// procNet holds the per-interface sysctls of §6.8.
-const procNet = "/proc/sys/net"
+// ProcNet holds the per-interface sysctls of §6.8.
+const ProcNet = "/proc/sys/net"
 
 // Kernel executes operations and observes state via netlink and /proc/sys/net.
 type Kernel struct {
@@ -28,7 +28,7 @@ type Kernel struct {
 func (k *Kernel) Apply(op Op) error {
 	switch o := op.(type) {
 	case SetSysctl:
-		return os.WriteFile(filepath.Join(procNet, o.Path), []byte(o.Value), 0o644)
+		return os.WriteFile(filepath.Join(ProcNet, o.Path), []byte(o.Value), 0o644)
 	case SetLink:
 		return k.setLink(o)
 	case LinkUp:
