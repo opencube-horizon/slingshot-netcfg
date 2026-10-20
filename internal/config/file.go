@@ -42,6 +42,9 @@ type file struct {
 	IPv6 struct {
 		Disable bool `toml:"disable"`
 	} `toml:"ipv6"`
+	Security struct {
+		Landlock bool `toml:"landlock"`
+	} `toml:"security"`
 }
 
 func defaultFile() file {
@@ -62,6 +65,7 @@ func defaultFile() file {
 	f.Routing.MoveLocalRule = true
 	f.Routing.VLANs = true
 	f.IPv6.Disable = true
+	f.Security.Landlock = true
 	return f
 }
 

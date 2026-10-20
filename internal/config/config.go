@@ -26,6 +26,7 @@ type Config struct {
 	Apply          Apply
 	Routing        Routing
 	IPv6           IPv6
+	Security       Security
 }
 
 // Interfaces selects HSN interfaces (§6.2).
@@ -70,6 +71,11 @@ type Routing struct {
 // IPv6 controls IPv6 on HSN interfaces (§6.8).
 type IPv6 struct {
 	Disable bool
+}
+
+// Security controls self-confinement (§6.15).
+type Security struct {
+	Landlock bool
 }
 
 // Default returns the compiled-in defaults of §6.13.
@@ -160,7 +166,8 @@ func fromFile(f file) (Config, error) {
 			MoveLocalRule: f.Routing.MoveLocalRule,
 			VLANs:         f.Routing.VLANs,
 		},
-		IPv6: IPv6{Disable: f.IPv6.Disable},
+		IPv6:     IPv6{Disable: f.IPv6.Disable},
+		Security: Security{Landlock: f.Security.Landlock},
 	}, nil
 }
 
