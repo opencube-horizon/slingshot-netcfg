@@ -11,6 +11,7 @@ import (
 	"github.com/opencube-horizon/slingshot-netcfg/internal/config"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/desired"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/discover"
+	"github.com/opencube-horizon/slingshot-netcfg/internal/lldpd"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/netapply"
 )
 
@@ -18,8 +19,8 @@ import (
 type View struct {
 	// Known is false until the first successful lldpd poll.
 	Known bool
-	// Neighbors counts the LLDP neighbors in the last snapshot.
-	Neighbors int
+	// Neighbors are the interface's LLDP neighbors in the last snapshot.
+	Neighbors []lldpd.Neighbor
 	Target    *desired.Target
 	Err       error
 }

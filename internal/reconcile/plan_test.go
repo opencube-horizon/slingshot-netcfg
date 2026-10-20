@@ -10,6 +10,7 @@ import (
 	"github.com/opencube-horizon/slingshot-netcfg/internal/craytlv"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/desired"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/discover"
+	"github.com/opencube-horizon/slingshot-netcfg/internal/lldpd"
 	"github.com/opencube-horizon/slingshot-netcfg/internal/netapply"
 )
 
@@ -94,7 +95,7 @@ func kinds(ops []netapply.Op) []string {
 func TestPlan_firstProvisioning_followsSpecOrder(t *testing.T) {
 	in := Input{
 		Cfg: cfg, State: emptyState(), Ifaces: []discover.Iface{hsn0},
-		Views: map[string]View{"hsn0": {Known: true, Neighbors: 1, Target: target(addr0, craytlv.Forever)}},
+		Views: map[string]View{"hsn0": {Known: true, Neighbors: []lldpd.Neighbor{{}}, Target: target(addr0, craytlv.Forever)}},
 	}
 
 	got := kinds(Plan(in))
@@ -109,7 +110,7 @@ func TestPlan_isEmpty_whenConverged(t *testing.T) {
 	i, s := converged(addr0)
 	in := Input{
 		Cfg: cfg, State: s, Ifaces: []discover.Iface{i},
-		Views: map[string]View{"hsn0": {Known: true, Neighbors: 1, Target: target(addr0, craytlv.Forever)}},
+		Views: map[string]View{"hsn0": {Known: true, Neighbors: []lldpd.Neighbor{{}}, Target: target(addr0, craytlv.Forever)}},
 	}
 
 	if ops := Plan(in); len(ops) != 0 {
@@ -121,7 +122,7 @@ func TestPlan_replacesAddressRulesAndRoutes_whenTargetChanges(t *testing.T) {
 	i, s := converged(addr0)
 	in := Input{
 		Cfg: cfg, State: s, Ifaces: []discover.Iface{i},
-		Views: map[string]View{"hsn0": {Known: true, Neighbors: 1, Target: target(addr1, craytlv.Forever)}},
+		Views: map[string]View{"hsn0": {Known: true, Neighbors: []lldpd.Neighbor{{}}, Target: target(addr1, craytlv.Forever)}},
 	}
 
 	got := kinds(Plan(in))

@@ -14,7 +14,7 @@ import (
 // noteNeighbor records the interface's neighbor and target from its view and
 // logs what changed (§6.11).
 func (r *Reconciler) noteNeighbor(name string, s *ifaceState, v View, now time.Time) {
-	n := r.neighborOf(name, v, now)
+	n := neighborOf(v, now)
 	r.logNeighborChange(name, s.neighbor, n)
 	r.trackNoNeighbor(name, s, n != nil, now)
 	s.neighbor = n
@@ -24,15 +24,15 @@ func (r *Reconciler) noteNeighbor(name string, s *ifaceState, v View, now time.T
 	}
 }
 
-func (r *Reconciler) neighborOf(name string, v View, now time.Time) *status.Neighbor {
+func neighborOf(v View, now time.Time) *status.Neighbor {
 	switch {
 	case v.Target != nil:
 		return &status.Neighbor{
 			SysName: v.Target.SysName, PortDescription: v.Target.PortDescription, LastSeen: now,
 			QoSProfile: v.Target.Payload.QoSProfile, CrayExtra: v.Target.Payload.Extra,
 		}
-	case v.Neighbors > 0:
-		first := r.snapshot.Neighbors[name][0]
+	case len(v.Neighbors) > 0:
+		first := v.Neighbors[0]
 		return &status.Neighbor{SysName: first.SysName, PortDescription: first.PortDescription, LastSeen: now}
 	default:
 		return nil
@@ -41,12 +41,11 @@ func (r *Reconciler) neighborOf(name string, v View, now time.Time) *status.Neig
 
 func (r *Reconciler) logNeighborChange(name string, old, n *status.Neighbor) {
 	switch {
-	case old == nil && n == nil:
-	case old == nil:
+	case old == nil && n != nil:
 		r.Log.Info("neighbor appeared", "ifname", name, "sysName", n.SysName, "port", n.PortDescription)
-	case n == nil:
+	case old != nil && n == nil:
 		r.Log.Warn("neighbor disappeared", "ifname", name, "sysName", old.SysName)
-	default:
+	case old != nil && n != nil:
 		if n.SysName != old.SysName || n.PortDescription != old.PortDescription {
 			r.Log.Info("neighbor changed", "ifname", name, "sysName", n.SysName, "port", n.PortDescription)
 		}

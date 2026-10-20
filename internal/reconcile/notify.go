@@ -1,7 +1,6 @@
 package reconcile
 
 import (
-	"maps"
 	"slices"
 	"strings"
 
@@ -29,10 +28,12 @@ func (r *Reconciler) statusLine() string {
 	if len(r.ifs) == 0 {
 		parts = append(parts, "no HSN interface selected")
 	}
-	for _, name := range slices.Sorted(maps.Keys(r.ifs)) {
-		parts = append(parts, name+" "+string(r.ifs[name].phase))
+	lines := make([]string, 0, len(r.ifs))
+	for name, s := range r.ifs {
+		lines = append(lines, name+" "+string(s.phase))
 	}
-	return strings.Join(parts, ", ")
+	slices.Sort(lines)
+	return strings.Join(append(parts, lines...), ", ")
 }
 
 func (r *Reconciler) notify(state string) {

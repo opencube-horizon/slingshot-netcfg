@@ -74,22 +74,22 @@ func (r *Reconciler) writeReady(i discover.Iface, s *ifaceState) {
 	s.ready = c
 }
 
-func (r *Reconciler) writeState(ifaces []discover.Iface, st netapply.State) {
+func (r *Reconciler) writeState(sel []tracked, st netapply.State) {
 	if r.DryRun {
 		return
 	}
 	doc := status.Document{LLDPD: status.LLDPD{Reachable: r.snapshot != nil && r.lldpdErr == nil, LastPoll: r.lastPoll, LastError: errText(r.lldpdErr)}}
-	for _, i := range ifaces {
-		s := r.ifs[i.Link.Name]
+	for _, t := range sel {
+		s, name := t.state, t.Link.Name
 		e := firstErr(s.lastErr, s.viewErr)
 		if s.contended && e == nil {
-			e = errors.New("another agent is modifying " + i.Link.Name)
+			e = errors.New("another agent is modifying " + name)
 		}
-		entry := status.Interface{Ifname: i.Link.Name, PCI: i.PCI, Phase: string(s.phase), LastError: withHint(e, s), Neighbor: s.neighbor, Target: configOf(s.target)}
+		entry := status.Interface{Ifname: name, PCI: t.PCI, Phase: string(s.phase), LastError: withHint(e, s), Neighbor: s.neighbor, Target: configOf(s.target)}
 		if s.phase == PhaseProvisioned {
 			entry.Applied = configOf(s.target)
-		} else if addrs := st.Addrs[i.Link.Name]; len(addrs) > 0 {
-			entry.Applied = &status.Config{MAC: i.Link.MAC.String(), Addr: addrs[0].Prefix.String(), MTU: i.Link.MTU}
+		} else if addrs := st.Addrs[name]; len(addrs) > 0 {
+			entry.Applied = &status.Config{MAC: t.Link.MAC.String(), Addr: addrs[0].Prefix.String(), MTU: t.Link.MTU}
 		}
 		doc.Interfaces = append(doc.Interfaces, entry)
 	}

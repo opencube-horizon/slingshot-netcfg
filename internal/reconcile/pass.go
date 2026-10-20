@@ -32,12 +32,11 @@ func (r *Reconciler) pass(now time.Time) bool {
 		return false
 	}
 
-	r.trackSelection(ifaces)
-	views := make(map[string]View, len(ifaces))
-	for _, i := range ifaces {
-		s := r.ifs[i.Link.Name]
-		s.pci, s.running = i.PCI, i.Link.Running
-		views[i.Link.Name] = r.view(i.Link.Name, s, now)
+	sel := r.trackSelection(ifaces)
+	views := make(map[string]View, len(sel))
+	for _, t := range sel {
+		t.state.pci, t.state.running = t.PCI, t.Link.Running
+		views[t.Link.Name] = r.view(t.Link.Name, t.state, now)
 	}
 
 	ops := Plan(Input{Cfg: r.Cfg, State: st, Ifaces: ifaces, VLANs: vlans, Views: views, SeenVLANAddrs: r.seenVLAN})
@@ -53,32 +52,44 @@ func (r *Reconciler) pass(now time.Time) bool {
 			r.seenVLAN[a.Prefix] = true
 		}
 	}
-	allProvisioned := len(ifaces) > 0
-	for _, i := range ifaces {
-		s := r.ifs[i.Link.Name]
-		phase := phaseOf(s, views[i.Link.Name], len(st.Addrs[i.Link.Name]) > 0, pending[i.Link.Name])
+	allProvisioned := len(sel) > 0
+	for _, t := range sel {
+		s, name := t.state, t.Link.Name
+		phase := phaseOf(s, views[name], len(st.Addrs[name]) > 0, pending[name])
 		if phase != s.phase {
-			r.Log.Info("phase changed", "ifname", i.Link.Name, "from", s.phase, "to", phase, "err", errText(firstErr(views[i.Link.Name].Err, s.lastErr)))
+			r.Log.Info("phase changed", "ifname", name, "from", s.phase, "to", phase, "err", errText(firstErr(views[name].Err, s.lastErr)))
 			s.phase = phase
 		}
 		if phase == PhaseProvisioned {
 			s.markConverged()
 		}
 		allProvisioned = allProvisioned && phase == PhaseProvisioned
-		r.writeReady(i, s)
+		r.writeReady(t.Iface, s)
 	}
-	r.writeState(ifaces, st)
+	r.writeState(sel, st)
 	return allProvisioned
 }
 
-func (r *Reconciler) trackSelection(ifaces []discover.Iface) {
-	seen := map[string]bool{}
+// tracked is a selected interface with its reconcile state.
+type tracked struct {
+	discover.Iface
+	state *ifaceState
+}
+
+// trackSelection creates the state of newly selected interfaces, drops that
+// of deselected ones, and pairs each selected interface with its state.
+func (r *Reconciler) trackSelection(ifaces []discover.Iface) []tracked {
+	sel := make([]tracked, 0, len(ifaces))
+	seen := make(map[string]bool, len(ifaces))
 	for _, i := range ifaces {
 		seen[i.Link.Name] = true
-		if _, ok := r.ifs[i.Link.Name]; !ok {
+		s, ok := r.ifs[i.Link.Name]
+		if !ok {
 			r.Log.Info("interface selected", "ifname", i.Link.Name, "pci", i.PCI, "n", i.N)
-			r.ifs[i.Link.Name] = &ifaceState{}
+			s = &ifaceState{}
+			r.ifs[i.Link.Name] = s
 		}
+		sel = append(sel, tracked{Iface: i, state: s})
 	}
 	for name := range r.ifs {
 		if !seen[name] {
@@ -86,6 +97,7 @@ func (r *Reconciler) trackSelection(ifaces []discover.Iface) {
 			delete(r.ifs, name)
 		}
 	}
+	return sel
 }
 
 // view derives the interface's neighbor view from the latest snapshot and
@@ -95,11 +107,11 @@ func (r *Reconciler) view(name string, s *ifaceState, now time.Time) View {
 		return View{}
 	}
 	neighbors := r.snapshot.Neighbors[name]
-	v := View{Known: true, Neighbors: len(neighbors)}
+	v := View{Known: true, Neighbors: neighbors}
 	if s.running && !r.snapshot.Handled[name] {
 		if s.unhandledSince.IsZero() {
 			s.unhandledSince = now
-		} else if now.Sub(s.unhandledSince) > unhandledAfter && v.Neighbors == 0 {
+		} else if now.Sub(s.unhandledSince) > unhandledAfter && len(v.Neighbors) == 0 {
 			v.Err = errNotHandled
 		}
 	} else {
