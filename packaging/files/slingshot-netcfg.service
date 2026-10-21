@@ -13,15 +13,16 @@ WatchdogSec=30s
 RuntimeDirectory=slingshot-netcfg
 RuntimeDirectoryPreserve=yes
 
-# Unprivileged, with only CAP_NET_ADMIN (netlink changes and the
-# /proc/sys/net sysctls); the lldpd group grants lldpcli the control socket.
+# Unprivileged, with CAP_NET_ADMIN (netlink changes and the /proc/sys/net
+# sysctls) and CAP_NET_RAW (cxi_eth requires it from whoever sets hsnN up:
+# "Can't allocate Eth1 CP"); the lldpd group grants lldpcli the control socket.
 # A static user (sysusers.d) rather than DynamicUser=, which would move the
 # preserved runtime directory below the root-only /run/private.
 User=slingshot-netcfg
 Group=slingshot-netcfg
 SupplementaryGroups=lldpd
-AmbientCapabilities=CAP_NET_ADMIN
-CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
 NoNewPrivileges=yes
 
 ProtectSystem=strict
