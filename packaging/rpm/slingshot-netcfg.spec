@@ -102,6 +102,7 @@ if systemctl -q is-active NetworkManager.service 2>/dev/null; then systemctl rel
 %dir %{_prefix}/lib/NetworkManager/conf.d
 %{_prefix}/lib/NetworkManager/conf.d/90-%{name}.conf
 %{_sysctldir}/90-%{name}.conf
+%dir %{_sysconfdir}/security/limits.d
 %config(noreplace) %{_sysconfdir}/security/limits.d/99-%{name}.conf
 
 %changelog
