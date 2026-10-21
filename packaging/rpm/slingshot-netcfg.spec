@@ -55,6 +55,11 @@ echo 'u %{name} - "Slingshot HSN provisioning from LLDP" -' | systemd-sysusers -
 %define chown_rundir \
 if [ -d /run/%{name} ]; then chown -R %{name}:%{name} /run/%{name} || :; fi
 
+# NetworkManager only reads the unmanaged-devices drop-in on reload; until
+# then it keeps managing hsnN. A reload doesn't touch existing connections.
+%define reload_networkmanager \
+if systemctl -q is-active NetworkManager.service 2>/dev/null; then systemctl reload NetworkManager.service || :; fi
+
 %if 0%{?suse_version}
 %pre
 %create_user
@@ -62,6 +67,7 @@ if [ -d /run/%{name} ]; then chown -R %{name}:%{name} /run/%{name} || :; fi
 
 %post
 %chown_rundir
+%reload_networkmanager
 %service_add_post %{name}.service
 %sysctl_apply 90-%{name}.conf
 
@@ -76,6 +82,7 @@ if [ -d /run/%{name} ]; then chown -R %{name}:%{name} /run/%{name} || :; fi
 
 %post
 %chown_rundir
+%reload_networkmanager
 %systemd_post %{name}.service
 %sysctl_apply 90-%{name}.conf
 
