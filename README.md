@@ -39,6 +39,44 @@ Output in `/run/slingshot-netcfg/`:
 
 Stopping or simply restarting the service never deconfigures anything.
 
+## Making services depend on HSN readiness
+
+The service `slingshot-netcfg.service` itself is ready after its first pass, not
+once any or all `hsnN` is provisioned, so `After=slingshot-netcfg.service` is not enough.
+
+The RPM ships a path unit and a target per interface instead:
+
+```sh
+systemctl enable --now slingshot-netcfg-ready@hsn0.path
+```
+
+`slingshot-netcfg-ready@hsn0.target` becomes active once `hsn0.ready` exists,
+which in turn gets created as soon as `hsn0` is provisioned the first time.
+
+Make the target want consumers, e.g. LNet over `cxi0`:
+
+```ini
+# /etc/systemd/system/slingshot-netcfg-ready@hsn0.target.d/lnet.conf
+[Unit]
+Wants=lnet.service
+```
+
+and prevent consumers from being started before the used HSN is ready,
+in case they are being pulled in by other targets (such as the `multi-user.target`).
+
+```ini
+# /etc/systemd/system/lnet.service.d/hsn0-ready.conf
+[Unit]
+ConditionPathExists=/run/slingshot-netcfg/hsn0.ready
+```
+
+On Talos, make the extension service depend on the readiness file instead:
+
+```yaml
+depends:
+  - path: /run/slingshot-netcfg/hsn0.ready
+```
+
 ## Bring-up
 
 ![Bring-up of one Cassini NIC](docs/hsn-bringup.svg)
