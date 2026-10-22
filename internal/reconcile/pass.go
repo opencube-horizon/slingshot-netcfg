@@ -35,7 +35,7 @@ func (r *Reconciler) pass(now time.Time) bool {
 	sel := r.trackSelection(ifaces)
 	views := make(map[string]View, len(sel))
 	for _, t := range sel {
-		t.state.pci, t.state.running = t.PCI, t.Link.Running
+		t.state.pci, t.state.running, t.state.lldpGroup = t.PCI, t.Link.Running, st.LLDPGroup[t.Link.Name]
 		views[t.Link.Name] = r.view(t.Link.Name, t.state, now)
 	}
 
@@ -117,6 +117,11 @@ func (r *Reconciler) view(name string, s *ifaceState, now time.Time) View {
 	} else {
 		s.unhandledSince = time.Time{}
 	}
+	// lldpd joins the group when it starts handling the interface; a NIC that
+	// filters multicast drops every LLDP frame without it.
+	if v.Err == nil && s.running && r.snapshot.Handled[name] && !s.lldpGroup && len(neighbors) == 0 {
+		v.Err = errNoLLDPGroup
+	}
 	if len(neighbors) > 0 {
 		t, err := desired.DeriveTarget(neighbors, r.Cfg.OrgTLV, r.Cfg.MAC)
 		if err != nil {
@@ -130,7 +135,10 @@ func (r *Reconciler) view(name string, s *ifaceState, now time.Time) View {
 	return v
 }
 
-var errNotHandled = errors.New("interface not handled by lldpd")
+var (
+	errNotHandled  = errors.New("interface not handled by lldpd")
+	errNoLLDPGroup = errors.New("lldpd has not joined the LLDP multicast group, so the NIC drops LLDP frames")
+)
 
 // execute runs ops in order and returns the interfaces whose operations
 // didn't all succeed (failed, or skipped because of backoff/contention).

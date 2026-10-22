@@ -17,6 +17,7 @@ import (
 const (
 	hintLLDPD       = "check that lldpd is running (ext-lldpd on Talos, lldpd.service on distributions)"
 	hintNotHandled  = "the lldpd interface pattern must include hsn*"
+	hintNoLLDPGroup = "restart lldpd; it joins the group when it starts handling the interface"
 	hintNoCarrier   = "check cabling and the local adapter state; carrier may be absent"
 	hintNoNeighbor  = "check the Rosetta switch LLDP configuration and whether it advertises on other ports"
 	hintNoCrayTLV   = "fabric configuration not active or not advertised on this port, or lldpd lacks custom-TLV support"
@@ -28,6 +29,8 @@ const (
 func hintFor(err error) string {
 	var fe *craytlv.FieldError
 	switch {
+	case errors.Is(err, errNoLLDPGroup):
+		return hintNoLLDPGroup
 	case errors.Is(err, errNotHandled):
 		return hintNotHandled
 	case errors.Is(err, desired.ErrNoCrayTLV):

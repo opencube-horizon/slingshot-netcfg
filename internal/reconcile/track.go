@@ -33,12 +33,13 @@ const (
 // ifaceState is what the reconciler remembers about one selected interface
 // between passes.
 type ifaceState struct {
-	pci      string
-	running  bool
-	phase    Phase
-	lastErr  error
-	target   *desired.Target
-	neighbor *status.Neighbor
+	pci       string
+	running   bool
+	lldpGroup bool
+	phase     Phase
+	lastErr   error
+	target    *desired.Target
+	neighbor  *status.Neighbor
 
 	backoff   time.Duration
 	notBefore time.Time

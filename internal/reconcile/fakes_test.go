@@ -3,6 +3,7 @@ package reconcile
 import (
 	"encoding/json/v2"
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -29,7 +30,7 @@ type fakeKernel struct {
 func newFakeKernel() *fakeKernel {
 	return &fakeKernel{
 		links: []netapply.Link{hsn0.Link},
-		st:    netapply.State{Addrs: map[string][]netapply.Addr{}, Sysctls: map[string]string{}, LocalRules: localRules(0, 32766, 32767)},
+		st:    netapply.State{Addrs: map[string][]netapply.Addr{}, Sysctls: map[string]string{}, LocalRules: localRules(0, 32766, 32767), LLDPGroup: map[string]bool{"hsn0": true}},
 	}
 }
 
@@ -50,6 +51,7 @@ func (k *fakeKernel) Observe(links []netapply.Link, _ []string, _ bool) (netappl
 		s.Addrs[n] = slices.Clone(a)
 	}
 	s.Rules, s.Routes, s.LocalRules = slices.Clone(k.st.Rules), slices.Clone(k.st.Routes), slices.Clone(k.st.LocalRules)
+	s.LLDPGroup = maps.Clone(k.st.LLDPGroup)
 	return s, nil
 }
 

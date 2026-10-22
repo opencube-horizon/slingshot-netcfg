@@ -64,7 +64,36 @@ func (k *Kernel) Observe(links []Link, devs []string, disableIPv6 bool) (State, 
 	if s.Sysctls, err = k.observeSysctls(devs, disableIPv6); err != nil {
 		return State{}, err
 	}
+	if s.LLDPGroup, err = observeLLDPGroup(); err != nil {
+		return State{}, err
+	}
 	return s, nil
+}
+
+// DevMcast lists the link-layer multicast addresses of all interfaces
+// (netlink doesn't report them).
+const DevMcast = "/proc/net/dev_mcast"
+
+// lldpMulticast is 01:80:c2:00:00:0e as DevMcast prints it.
+const lldpMulticast = "0180c200000e"
+
+func observeLLDPGroup() (map[string]bool, error) {
+	b, err := os.ReadFile(DevMcast)
+	if err != nil {
+		return nil, fmt.Errorf("read multicast addresses: %w", err)
+	}
+	return parseLLDPGroup(string(b)), nil
+}
+
+// parseLLDPGroup parses DevMcast lines ("ifindex name users global address").
+func parseLLDPGroup(s string) map[string]bool {
+	out := map[string]bool{}
+	for line := range strings.Lines(s) {
+		if f := strings.Fields(line); len(f) == 5 && f[4] == lldpMulticast {
+			out[f[1]] = true
+		}
+	}
+	return out
 }
 
 func (k *Kernel) observeAddrs(names map[int]string) (map[string][]Addr, error) {

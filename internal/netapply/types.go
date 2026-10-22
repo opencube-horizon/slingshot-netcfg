@@ -43,6 +43,10 @@ type State struct {
 	// Sysctls maps a path below /proc/sys/net (e.g. "ipv4/conf/hsn0/rp_filter")
 	// to its current value.
 	Sysctls map[string]string
+	// LLDPGroup holds the interfaces whose multicast list contains the LLDP
+	// address 01:80:c2:00:00:0e. lldpd adds it; without it, NICs that filter
+	// multicast drop LLDP frames.
+	LLDPGroup map[string]bool
 }
 
 // LocalRule is a selector-less `lookup local` rule. Its protocol is needed
