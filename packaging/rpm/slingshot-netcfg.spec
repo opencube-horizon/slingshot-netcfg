@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 
 Name:           slingshot-netcfg
-Version:        0.1.1
+Version:        0.1.2
 Release:        1%{?dist}
 Summary:        Slingshot HSN provisioning from LLDP
 License:        MIT
@@ -106,6 +106,10 @@ if systemctl -q is-active NetworkManager.service 2>/dev/null; then systemctl rel
 %config(noreplace) %{_sysconfdir}/security/limits.d/99-%{name}.conf
 
 %changelog
+* Thu Oct 22 2026 Tiziano Müller <tiziano.mueller@hpe.com> - 0.1.2-1
+- Keep Landlock access to /proc/sys/net after dentry eviction
+- Report when lldpd hasn't joined the LLDP multicast group
+
 * Wed Oct 21 2026 Tiziano Müller <tiziano.mueller@hpe.com> - 0.1.1-1
 - Run unprivileged and sandboxed, with CAP_NET_ADMIN and CAP_NET_RAW;
   sd_notify readiness, status and watchdog; Landlock
