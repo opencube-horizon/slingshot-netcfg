@@ -1,0 +1,10 @@
+[Unit]
+Description=Wait for slingshot-netcfg to provision %I
+Documentation=https://github.com/opencube-horizon/slingshot-netcfg
+
+[Path]
+PathExists=/run/slingshot-netcfg/%i.ready
+Unit=slingshot-netcfg-ready@%i.target
+
+[Install]
+WantedBy=paths.target

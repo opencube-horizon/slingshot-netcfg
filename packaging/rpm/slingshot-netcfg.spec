@@ -40,6 +40,7 @@ go test ./internal/...
 %install
 install -D -m 0755 %{name} %{buildroot}%{_bindir}/%{name}
 install -D -m 0644 packaging/files/%{name}.service %{buildroot}%{_unitdir}/%{name}.service
+install -D -m 0644 -t %{buildroot}%{_unitdir} packaging/files/%{name}-ready@.path packaging/files/%{name}-ready@.target
 install -D -m 0644 packaging/files/%{name}.sysusers %{buildroot}%{_sysusersdir}/%{name}.conf
 install -D -m 0644 packaging/files/90-%{name}-networkmanager.conf %{buildroot}%{_prefix}/lib/NetworkManager/conf.d/90-%{name}.conf
 install -D -m 0644 packaging/files/90-%{name}-sysctl.conf %{buildroot}%{_sysctldir}/90-%{name}.conf
@@ -97,6 +98,8 @@ if systemctl -q is-active NetworkManager.service 2>/dev/null; then systemctl rel
 %license LICENSE
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service
+%{_unitdir}/%{name}-ready@.path
+%{_unitdir}/%{name}-ready@.target
 %{_sysusersdir}/%{name}.conf
 %dir %{_prefix}/lib/NetworkManager
 %dir %{_prefix}/lib/NetworkManager/conf.d

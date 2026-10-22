@@ -1,0 +1,3 @@
+[Unit]
+Description=slingshot-netcfg has provisioned %I
+Documentation=https://github.com/opencube-horizon/slingshot-netcfg
