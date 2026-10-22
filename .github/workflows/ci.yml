@@ -29,6 +29,10 @@ jobs:
         with:
           go-version-file: go.mod
       - run: make test
+      # As root, the Landlock test also drops the dentry caches, which makes
+      # procfs re-create the directories that carry rules (spec §6.15).
+      - name: Landlock test as root
+        run: sudo env PATH="$PATH" GOMODCACHE="$(go env GOMODCACHE)" GOCACHE=/tmp/gocache-root "$(command -v go)" test -count=1 ./internal/sandbox/
 
   nilaway:
     runs-on: ubuntu-latest
